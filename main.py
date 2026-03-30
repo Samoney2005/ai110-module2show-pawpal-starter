@@ -246,3 +246,42 @@ wrong_pet = scheduler.filter_tasks(
 print(f"\n  Filter Rex plan for pet_name='Luna' → {len(wrong_pet)} result(s) (expected 0)")
 
 print("\n" + "=" * 60 + "\n")
+
+# ---------------------------------------------------------------------------
+# Step 3: Automate Recurring Tasks demo
+# ---------------------------------------------------------------------------
+
+print_banner("Step 3 — Recurring Task Automation")
+
+# Fresh plans for this demo
+rex_plan3  = scheduler.generate_daily_plan(rex,  owner)
+luna_plan3 = scheduler.generate_daily_plan(luna, owner)
+
+print("\n  Completing recurring tasks via scheduler.mark_task_complete()...\n")
+
+# Complete all of Rex's scheduled tasks
+for st in rex_plan3.scheduled_tasks:
+    next_task = scheduler.mark_task_complete(st)
+    recur_note = (
+        f"  → next occurrence queued for {next_task.task_id.split('-', 2)[-1]}"
+        if next_task else "  (one-off, no recurrence)"
+    )
+    print(f"  [{st.status.upper()}] {st.task.title}{recur_note}")
+
+# Complete Luna's first task (Breakfast — daily recurring)
+st_luna = luna_plan3.scheduled_tasks[0]
+next_luna = scheduler.mark_task_complete(st_luna)
+recur_note = (
+    f"  → next occurrence queued for {next_luna.task_id.split('-', 2)[-1]}"
+    if next_luna else "  (one-off, no recurrence)"
+)
+print(f"  [{st_luna.status.upper()}] {st_luna.task.title}{recur_note}")
+
+print(f"\n  recurring_queue now has {len(scheduler.recurring_queue)} entry(ies):\n")
+for due_date, queued_task in scheduler.recurring_queue:
+    print(
+        f"    Due {due_date}  |  [{queued_task.recurrence_interval}]  "
+        f"{queued_task.title}  (id: {queued_task.task_id})"
+    )
+
+print("\n" + "=" * 60 + "\n")

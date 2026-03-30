@@ -4,9 +4,10 @@ Backend classes based on the UML class diagram.
 """
 
 from __future__ import annotations
+import copy
 from dataclasses import dataclass, field
-from datetime import date as _date
-from typing import List, Optional
+from datetime import date as _date, timedelta
+from typing import List, Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -268,6 +269,9 @@ class Scheduler:
         self.task_queue: List[CareTask] = []
         self.scheduling_strategy = scheduling_strategy
         self.available_minutes_per_day = available_minutes_per_day
+        # Holds (next_due_date, cloned_task) pairs for recurring tasks that have
+        # been completed and are waiting to be scheduled on a future day.
+        self.recurring_queue: List[Tuple[str, CareTask]] = []
 
     # ------------------------------------------------------------------
     # Public API
@@ -384,6 +388,40 @@ class Scheduler:
             if pet is None or pet.name != pet_name:
                 result = []
         return result
+
+    def mark_task_complete(self, scheduled_task: ScheduledTask) -> Optional[CareTask]:
+        """Mark a scheduled task complete and auto-schedule the next occurrence.
+
+        If the underlying CareTask is recurring, this method:
+        1. Marks the task as complete.
+        2. Clones the task with a new ``task_id`` (original ID + next due date).
+        3. Calculates the next due date using ``timedelta``:
+           - ``"daily"``  → today + 1 day
+           - ``"weekly"`` → today + 7 days
+        4. Appends ``(next_due_date, cloned_task)`` to ``self.recurring_queue``
+           so the caller can incorporate it into the next day's plan.
+
+        Returns the cloned next-occurrence CareTask, or ``None`` for one-off tasks.
+        """
+        scheduled_task.mark_complete()
+        task = scheduled_task.task
+
+        if not task.is_recurring:
+            return None
+
+        today = _date.today()
+        if task.recurrence_interval == "daily":
+            next_date = today + timedelta(days=1)
+        elif task.recurrence_interval == "weekly":
+            next_date = today + timedelta(weeks=1)
+        else:
+            return None
+
+        next_due_str = str(next_date)
+        next_task = copy.copy(task)
+        next_task.task_id = f"{task.task_id}-{next_due_str}"
+        self.recurring_queue.append((next_due_str, next_task))
+        return next_task
 
     def optimize_order(self, tasks: List[CareTask]) -> List[CareTask]:
         """Re-order tasks to respect preferred_time while keeping priority ties stable."""
