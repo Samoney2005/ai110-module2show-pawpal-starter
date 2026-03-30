@@ -64,6 +64,37 @@ Neither filter raises an exception on a mismatch; it simply returns an empty lis
 
 ---
 
+## Testing PawPal+
+
+### Running the test suite
+
+```bash
+python -m pytest
+```
+
+Add `-v` for verbose output that names each individual test:
+
+```bash
+python -m pytest -v
+```
+
+### What the tests cover
+
+| Area | Tests | What is verified |
+|---|---|---|
+| **Sorting correctness** | 3 | `sort_by_time()` returns tasks in chronological order; the original list is not mutated; tasks without a preferred time sort last |
+| **Recurrence logic** | 5 | Completing a daily task queues the next occurrence for tomorrow; weekly recurrence queues +7 days; non-recurring tasks return `None`; `ScheduledTask.status` flips to `"complete"` |
+| **Conflict detection** | 4 | Overlapping tasks produce at least one warning; non-overlapping tasks produce none; identical start times are flagged; warning messages name the conflicting tasks |
+| **Core task/pet operations** | 4 | `mark_complete`, `mark_skipped`, `add_task`, `remove_task` behave correctly |
+
+### Confidence Level
+
+**★★★★☆ (4/5)**
+
+All 16 tests pass and cover the three most critical scheduling behaviors — ordering, recurrence, and conflict detection. The suite catches regressions in the core logic layer. One star is withheld because the tests do not yet exercise the full `generate_daily_plan` pipeline end-to-end or the Streamlit UI layer, so integration-level bugs could still slip through.
+
+---
+
 ### Suggested workflow
 
 1. Read the scenario carefully and identify requirements and edge cases.
