@@ -285,3 +285,93 @@ for due_date, queued_task in scheduler.recurring_queue:
     )
 
 print("\n" + "=" * 60 + "\n")
+
+# ---------------------------------------------------------------------------
+# Step 4: Detect Task Conflicts demo
+# ---------------------------------------------------------------------------
+
+print_banner("Step 4 — Conflict Detection")
+
+# Build a pet with tasks that deliberately overlap in time
+# to verify the scheduler catches them.
+conflict_pet = Pet(name="Buddy", species="Dog", age=3, weight_kg=20.0, breed="Beagle")
+
+conflict_pet.add_task(WalkTask(
+    task_id="buddy-w1",
+    title="Morning Walk",
+    duration_minutes=30,        # 07:00 – 07:30
+    priority="medium",
+    preferred_time="07:00",
+    distance_km=2.0,
+    route_preference="neighborhood loop",
+    energy_level_required="medium",
+))
+
+conflict_pet.add_task(FeedingTask(
+    task_id="buddy-f1",
+    title="Breakfast",
+    duration_minutes=10,        # 07:15 — overlaps Morning Walk (ends 07:30)
+    priority="high",
+    preferred_time="07:15",
+    food_amount_cups=1.5,
+    food_type="dry kibble",
+))
+
+conflict_pet.add_task(MedicationTask(
+    task_id="buddy-med1",
+    title="Flea Treatment",
+    duration_minutes=5,         # 07:15 — also overlaps Morning Walk
+    priority="high",
+    preferred_time="07:15",
+    medication_name="NexGard",
+    dosage_mg=25.0,
+    administration_route="oral",
+))
+
+# Also add a task for Luna that clashes with one of Buddy's tasks (cross-pet)
+cross_pet_task = AppointmentTask(
+    task_id="luna-a2",
+    title="Dental Cleaning",
+    duration_minutes=90,        # 07:00 – 08:30 — clashes with Buddy's Morning Walk
+    priority="high",
+    preferred_time="07:00",
+    vet_name="Dr. Chen",
+    clinic_name="PetSmile Clinic",
+    appointment_type="dental cleaning",
+    location="456 Oak Ave",
+    is_confirmed=True,
+)
+luna.add_task(cross_pet_task)
+
+buddy_plan = scheduler.generate_daily_plan(conflict_pet)
+luna_plan4  = scheduler.generate_daily_plan(luna, owner)
+
+# --- Same-pet conflict check ---
+print("\n  [Same-pet] Buddy's schedule:")
+for st in buddy_plan.scheduled_tasks:
+    print(f"    {st.time_slot}  {st.task.title} ({st.task.duration_minutes} min)")
+
+same_pet_warnings = scheduler.check_conflicts(
+    [st.task for st in buddy_plan.scheduled_tasks]
+)
+if same_pet_warnings:
+    print("\n  Same-pet conflict warnings:")
+    for w in same_pet_warnings:
+        print(f"    {w}")
+else:
+    print("\n  No same-pet conflicts found.")
+
+# --- Cross-pet conflict check ---
+print("\n  [Cross-pet] Checking Buddy + Luna together...")
+all_warnings = scheduler.check_all_conflicts([buddy_plan, luna_plan4])
+if all_warnings:
+    print("\n  Cross-pet conflict warnings:")
+    for w in all_warnings:
+        print(f"    {w}")
+else:
+    print("\n  No cross-pet conflicts found.")
+
+# Clean up: remove the temporary task added to luna so other demos stay clean
+luna.remove_task("luna-a2")
+
+print("\n" + "=" * 60 + "\n")

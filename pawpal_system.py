@@ -328,7 +328,12 @@ class Scheduler:
             return list(tasks)
 
     def check_conflicts(self, tasks: List[CareTask]) -> List[str]:
-        """Return a list of conflict descriptions for overlapping tasks."""
+        """Return a list of conflict descriptions for overlapping tasks.
+
+        Lightweight strategy: sort tasks by start time, then walk adjacent pairs.
+        Returns warning strings instead of raising exceptions so callers can
+        decide how to surface the information.
+        """
         conflicts: List[str] = []
         timed = [(t, _time_to_minutes(t.preferred_time)) for t in tasks
                  if _time_to_minutes(t.preferred_time) >= 0]
@@ -340,9 +345,48 @@ class Scheduler:
             end_a = start_a + task_a.duration_minutes
             if end_a > start_b:
                 conflicts.append(
-                    f"Conflict: '{task_a.title}' ({task_a.preferred_time}, "
+                    f"WARNING: '{task_a.title}' ({task_a.preferred_time}, "
                     f"{task_a.duration_minutes} min) overlaps with "
                     f"'{task_b.title}' ({task_b.preferred_time})."
+                )
+        return conflicts
+
+    def check_all_conflicts(self, plans: List[DayPlan]) -> List[str]:
+        """Detect scheduling conflicts across all pets' day plans.
+
+        Combines every scheduled task from every plan into one timeline, then
+        walks adjacent pairs to find overlaps — the same lightweight strategy
+        used by check_conflicts, but pet names are included in each warning so
+        it is clear whether a conflict is within one pet's schedule or between
+        two different pets.
+
+        Returns a (possibly empty) list of human-readable warning strings.
+        """
+        # Build a flat list of (pet_name, task, start_minutes)
+        entries: List[Tuple[str, CareTask, int]] = []
+        for plan in plans:
+            for st in plan.scheduled_tasks:
+                minutes = _time_to_minutes(st.time_slot)
+                if minutes >= 0:
+                    entries.append((plan.pet.name, st.task, minutes))
+
+        entries.sort(key=lambda e: e[2])  # sort by start time
+
+        conflicts: List[str] = []
+        for i in range(len(entries) - 1):
+            pet_a, task_a, start_a = entries[i]
+            pet_b, task_b, start_b = entries[i + 1]
+            end_a = start_a + task_a.duration_minutes
+            if end_a > start_b:
+                scope = (
+                    f"[same pet: {pet_a}]"
+                    if pet_a == pet_b
+                    else f"[cross-pet: {pet_a} / {pet_b}]"
+                )
+                conflicts.append(
+                    f"WARNING {scope}: '{task_a.title}' "
+                    f"({task_a.preferred_time}, {task_a.duration_minutes} min) "
+                    f"overlaps with '{task_b.title}' ({task_b.preferred_time})."
                 )
         return conflicts
 
