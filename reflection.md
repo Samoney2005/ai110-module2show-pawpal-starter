@@ -24,10 +24,22 @@ Four subclasses extend `CareTask` with type-specific data:
 
 **ScheduledTask** wraps a `CareTask` with a time slot and completion status, keeping the original task definition clean and reusable.
 
+
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After reviewing the skeleton with AI assistance, several gaps emerged:
+
+**Change 1 — Added `owner` parameter to `Scheduler.generate_daily_plan`**
+The original design passed only a `Pet` to the scheduler. The review flagged that `Owner.preferred_walk_time` would be silently ignored. Updating the signature to accept an optional `Owner` lets the scheduler respect user preferences without breaking existing callers.
+
+**Change 2 — Linked `MedicationTask` to a preceding `FeedingTask` via `required_before_task_id`**
+`MedicationTask.requires_food` was a boolean with no enforcement path. The scheduler had no way to know *which* feeding task should precede the medication. Adding a `required_before_task_id: str = ""` field on `MedicationTask` gives the scheduler an explicit dependency edge to act on during `optimize_order`.
+
+**Change 3 — Clarified `Scheduler.task_queue` lifecycle**
+The queue was initialized empty but never populated before `generate_daily_plan` ran. Documented (and will implement) that `generate_daily_plan` is responsible for loading `pet.tasks` into `self.task_queue` at the start of each call, then clearing it on exit, making the flow explicit.
+
+**Change 4 — Added `date: str` parameter to `CareTask.is_due_today`**
+Without a date argument the method cannot be unit-tested or used for future-date planning. Changed the signature to `is_due_today(self, date: str) -> bool` so callers always pass the date explicitly.
 
 ---
 - Identify three core actions a user should be able to perform
