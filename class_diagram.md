@@ -1,6 +1,9 @@
 # PawPal+ Class Diagram
 
 ```mermaid
+---
+id: 81249dc6-8a6d-4251-9ef8-0c58e4d86038
+---
 classDiagram
     class Owner {
         +String name
