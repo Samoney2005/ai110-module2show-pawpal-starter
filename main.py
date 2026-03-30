@@ -183,3 +183,66 @@ for pet in owner.pets:
     print_plan(plan)
 
 print("\n" + "=" * 60 + "\n")
+
+# ---------------------------------------------------------------------------
+# Step 2: Sorting and Filtering demo
+# ---------------------------------------------------------------------------
+
+print_banner("Step 2 — Sorting & Filtering")
+
+# --- sort_by_time demo ---
+# Collect Rex's tasks intentionally out of order (evening feed first)
+tasks_out_of_order = [
+    rex.tasks[3],   # Evening Feed   18:00
+    rex.tasks[2],   # Morning Walk   (no time — gets owner default later)
+    rex.tasks[1],   # Allergy Pill   07:10
+    rex.tasks[0],   # Morning Feed   07:00
+]
+
+print("\n  Tasks added OUT of order:")
+for t in tasks_out_of_order:
+    print(f"    [{t.preferred_time or '  --  '}]  {t.title}")
+
+sorted_tasks = scheduler.sort_by_time(tasks_out_of_order)
+
+print("\n  After sort_by_time():")
+for t in sorted_tasks:
+    print(f"    [{t.preferred_time or '  --  '}]  {t.title}")
+
+# --- filter_tasks demo ---
+# Generate fresh plans so we have ScheduledTask objects to filter
+rex_plan  = scheduler.generate_daily_plan(rex,  owner)
+luna_plan = scheduler.generate_daily_plan(luna, owner)
+
+# Mark a couple of tasks complete so filtering by status is meaningful
+rex_plan.scheduled_tasks[0].mark_complete()
+luna_plan.scheduled_tasks[0].mark_complete()
+
+print("\n  --- Filter: Rex tasks with status='complete' ---")
+complete_rex = scheduler.filter_tasks(
+    rex_plan.scheduled_tasks, status="complete", pet_name="Rex", pet=rex
+)
+for st in complete_rex:
+    print(f"    [{st.status.upper()}] {st.time_slot}  {st.task.title}")
+
+print("\n  --- Filter: Rex tasks with status='pending' ---")
+pending_rex = scheduler.filter_tasks(
+    rex_plan.scheduled_tasks, status="pending", pet_name="Rex", pet=rex
+)
+for st in pending_rex:
+    print(f"    [{st.status.upper()}] {st.time_slot}  {st.task.title}")
+
+print("\n  --- Filter: Luna tasks with status='pending' ---")
+pending_luna = scheduler.filter_tasks(
+    luna_plan.scheduled_tasks, status="pending", pet_name="Luna", pet=luna
+)
+for st in pending_luna:
+    print(f"    [{st.status.upper()}] {st.time_slot}  {st.task.title}")
+
+# Wrong pet name → should return empty list
+wrong_pet = scheduler.filter_tasks(
+    rex_plan.scheduled_tasks, pet_name="Luna", pet=rex
+)
+print(f"\n  Filter Rex plan for pet_name='Luna' → {len(wrong_pet)} result(s) (expected 0)")
+
+print("\n" + "=" * 60 + "\n")

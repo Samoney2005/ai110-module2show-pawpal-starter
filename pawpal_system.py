@@ -342,6 +342,49 @@ class Scheduler:
                 )
         return conflicts
 
+    def sort_by_time(self, tasks: List[CareTask]) -> List[CareTask]:
+        """Return tasks sorted chronologically by their preferred_time ('HH:MM').
+
+        Uses a lambda with _time_to_minutes as the sort key so that string times
+        like '09:00' and '14:30' are compared numerically rather than lexically.
+        Tasks with no preferred_time (empty string / unparseable) sort last.
+        """
+        return sorted(
+            tasks,
+            key=lambda t: (
+                _time_to_minutes(t.preferred_time)
+                if _time_to_minutes(t.preferred_time) >= 0
+                else 9999
+            ),
+        )
+
+    def filter_tasks(
+        self,
+        scheduled_tasks: List[ScheduledTask],
+        status: Optional[str] = None,
+        pet_name: Optional[str] = None,
+        pet: Optional[Pet] = None,
+    ) -> List[ScheduledTask]:
+        """Return scheduled tasks filtered by completion status and/or pet name.
+
+        Args:
+            scheduled_tasks: The list of ScheduledTask objects to filter.
+            status:    Keep only tasks whose status equals this value
+                       (``"pending"``, ``"complete"``, or ``"skipped"``).
+                       ``None`` means no status filter.
+            pet_name:  When supplied, only return results if *pet* matches
+                       this name.  Pass ``None`` to skip pet-name filtering.
+            pet:       The Pet associated with *scheduled_tasks*.
+                       Required when *pet_name* is provided.
+        """
+        result: List[ScheduledTask] = list(scheduled_tasks)
+        if status is not None:
+            result = [st for st in result if st.status == status]
+        if pet_name is not None:
+            if pet is None or pet.name != pet_name:
+                result = []
+        return result
+
     def optimize_order(self, tasks: List[CareTask]) -> List[CareTask]:
         """Re-order tasks to respect preferred_time while keeping priority ties stable."""
         # Sort by preferred_time first (chronological), using priority as tiebreaker.
