@@ -4,8 +4,25 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+The initial design uses 8 classes organized around a pet care workflow.
+
+**Owner** holds the user's contact info and a list of their pets. It acts as the entry point — you add pets through it and can retrieve all tasks across all pets.
+
+**Pet** stores the animal's profile (name, species, age, weight, breed, health conditions) and owns a list of `CareTask` objects. It can sort tasks by priority.
+
+**CareTask** is the base class for all tasks. It defines shared fields — title, duration, priority, preferred time, recurrence — and shared methods like `get_priority_score()` and `is_due_today()`.
+
+Four subclasses extend `CareTask` with type-specific data:
+- **FeedingTask** — food amount, type, meal time
+- **WalkTask** — distance, route, energy level
+- **MedicationTask** — medication name, dosage, administration route
+- **AppointmentTask** — vet name, clinic, appointment type, confirmation status
+
+**Scheduler** takes a pet's tasks and produces a `DayPlan`. It handles prioritization, conflict detection, and ordering.
+
+**DayPlan** represents one day's schedule — a list of `ScheduledTask` objects plus any skipped tasks with reasons.
+
+**ScheduledTask** wraps a `CareTask` with a time slot and completion status, keeping the original task definition clean and reusable.
 
 **b. Design changes**
 
@@ -13,6 +30,11 @@
 - If yes, describe at least one change and why you made it.
 
 ---
+- Identify three core actions a user should be able to perform
+1. See and monitor thier pets health
+2. Be able to create a schedule that can be easily modified
+3. Allow a pet to be added
+
 
 ## 2. Scheduling Logic and Tradeoffs
 
