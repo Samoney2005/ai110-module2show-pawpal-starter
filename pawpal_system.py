@@ -137,6 +137,34 @@ class Pet:
         """Remove a care task by its ID."""
         self.tasks = [t for t in self.tasks if t.task_id != task_id]
 
+    def update_task(
+        self,
+        task_id: str,
+        title: Optional[str] = None,
+        duration_minutes: Optional[int] = None,
+        priority: Optional[str] = None,
+        preferred_time: Optional[str] = None,
+        is_recurring: Optional[bool] = None,
+        recurrence_interval: Optional[str] = None,
+    ) -> bool:
+        """Update fields of an existing task by ID. Returns True if found."""
+        for task in self.tasks:
+            if task.task_id == task_id:
+                if title is not None:
+                    task.title = title
+                if duration_minutes is not None:
+                    task.duration_minutes = duration_minutes
+                if priority is not None:
+                    task.priority = priority
+                if preferred_time is not None:
+                    task.preferred_time = preferred_time
+                if is_recurring is not None:
+                    task.is_recurring = is_recurring
+                if recurrence_interval is not None:
+                    task.recurrence_interval = recurrence_interval
+                return True
+        return False
+
     def get_tasks_by_priority(self) -> List[CareTask]:
         """Return tasks sorted from highest to lowest priority."""
         return sorted(self.tasks, key=lambda t: t.get_priority_score(), reverse=True)

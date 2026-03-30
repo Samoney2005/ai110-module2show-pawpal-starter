@@ -1,6 +1,31 @@
 # PawPal+ (Module 2 Project)
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+PawPal+ is a Streamlit app that helps pet owners stay consistent with daily care by generating smart, conflict-free schedules for one or more pets.
+
+---
+
+## ✨ Features
+
+- **Pet & Owner Profiles** — Register owner preferences (including a preferred walk time) and one or more pets with species, breed, age, weight, and health conditions.
+- **Multiple Task Types** — The system layer defines four specialised subclasses (`FeedingTask`, `WalkTask`, `MedicationTask`, `AppointmentTask`), each with type-specific fields (food amount, distance, dosage, vet info, etc.). The current UI uses the base `CareTask` form to keep the interface simple.
+- **Sorting by Time** — Tasks are always displayed and scheduled in chronological order using a minutes-since-midnight sort key, regardless of the order they were entered.
+- **Priority-Based Scheduling** — A `high / medium / low` priority field ensures critical tasks (e.g., medication) are scheduled before lower-priority ones when time is tight.
+- **Daily Budget Enforcement** — The scheduler allocates tasks within a configurable daily time budget; tasks that don't fit are automatically moved to a "skipped" list with an explanation.
+- **Conflict Warnings** — An adjacent-pair sweep detects overlapping tasks before and after plan generation, surfacing human-readable warnings without crashing the app.
+- **Cross-Pet Conflict Detection** — `check_all_conflicts` spans multiple pets' `DayPlan` objects, labelling each warning as `[same pet]` or `[cross-pet]` for immediate clarity. This is a system-layer capability; the current UI manages one pet at a time.
+- **Daily & Weekly Recurrence** — Marking a recurring task complete automatically queues the next occurrence (+1 day or +7 days) using Python's `timedelta`.
+- **Medication Ordering Constraint** — Feeding tasks linked to a medication are always placed first, preventing logical scheduling errors.
+- **In-Place Task Editing** — An "Edit" panel lets the owner update any task's title, time, duration, priority, or recurrence without deleting and re-adding it. Saving invalidates the current plan so the next generation reflects the changes.
+- **Task Status Tracking** — Each scheduled task moves through `pending → complete / skipped`, with skip reasons stored for user feedback.
+- **Automated Test Suite** — 16 pytest tests cover sorting correctness, recurrence logic, conflict detection, and core task operations.
+
+---
+
+## 📸 Demo
+
+<a href="/course_images/ai110/pawpal_screenshot.png" target="_blank"><img src='/course_images/ai110/pawpal_screenshot.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
+
+---
 
 ## Scenario
 

@@ -124,6 +124,59 @@ else:
         for t in sorted_tasks
     ])
 
+    # ── Edit an existing task ────────────────────────────────────────────
+    with st.expander("✏️ Edit an existing task"):
+        task_map = {t.title: t for t in sorted_tasks}
+        edit_choice = st.selectbox("Select task to edit", list(task_map.keys()), key="edit_select")
+        task_to_edit = task_map[edit_choice]
+
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            new_title = st.text_input("Title", value=task_to_edit.title, key="edit_title")
+        with col_b:
+            new_duration = st.number_input(
+                "Duration (minutes)", min_value=1, max_value=240,
+                value=task_to_edit.duration_minutes, key="edit_duration"
+            )
+        with col_c:
+            priority_opts = ["low", "medium", "high"]
+            new_priority = st.selectbox(
+                "Priority", priority_opts,
+                index=priority_opts.index(task_to_edit.priority), key="edit_priority"
+            )
+
+        col_d, col_e = st.columns(2)
+        with col_d:
+            new_time = st.text_input(
+                "Preferred time (HH:MM)", value=task_to_edit.preferred_time, key="edit_time"
+            )
+        with col_e:
+            new_recurring = st.checkbox(
+                "Recurring?", value=task_to_edit.is_recurring, key="edit_recurring"
+            )
+            new_interval = ""
+            if new_recurring:
+                interval_opts = ["daily", "weekly"]
+                default_idx = interval_opts.index(task_to_edit.recurrence_interval) \
+                    if task_to_edit.recurrence_interval in interval_opts else 0
+                new_interval = st.selectbox(
+                    "Repeat every", interval_opts, index=default_idx, key="edit_interval"
+                )
+
+        if st.button("Save Changes"):
+            pet.update_task(
+                task_id=task_to_edit.task_id,
+                title=new_title,
+                duration_minutes=int(new_duration),
+                priority=new_priority,
+                preferred_time=new_time,
+                is_recurring=new_recurring,
+                recurrence_interval=new_interval,
+            )
+            st.session_state.plan = None
+            st.success(f"Task **{new_title}** updated!")
+            st.rerun()
+
     # Live conflict warnings — shown immediately after the table
     conflicts = scheduler_preview.check_conflicts(pet.tasks)
     if conflicts:
