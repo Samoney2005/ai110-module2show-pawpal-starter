@@ -235,6 +235,7 @@ class Owner:
         phone: str,
         preferred_walk_time: str = "",
     ) -> None:
+        """Initialise an Owner with contact details and an empty pet list."""
         self.name = name
         self.email = email
         self.phone = phone
@@ -263,6 +264,7 @@ class Scheduler:
         scheduling_strategy: str = "priority",
         available_minutes_per_day: int = 480,
     ) -> None:
+        """Initialise the Scheduler with a strategy and daily time budget."""
         self.task_queue: List[CareTask] = []
         self.scheduling_strategy = scheduling_strategy
         self.available_minutes_per_day = available_minutes_per_day
