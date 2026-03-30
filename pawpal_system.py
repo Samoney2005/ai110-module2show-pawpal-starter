@@ -393,9 +393,18 @@ class Scheduler:
     def sort_by_time(self, tasks: List[CareTask]) -> List[CareTask]:
         """Return tasks sorted chronologically by their preferred_time ('HH:MM').
 
-        Uses a lambda with _time_to_minutes as the sort key so that string times
-        like '09:00' and '14:30' are compared numerically rather than lexically.
-        Tasks with no preferred_time (empty string / unparseable) sort last.
+        Uses a lambda with ``_time_to_minutes`` as the sort key so that string
+        times like ``'09:00'`` and ``'14:30'`` are compared numerically rather
+        than lexically.  Tasks with no preferred_time (empty string or
+        unparseable value) are placed at the end of the list.
+
+        Args:
+            tasks: The list of CareTask objects to sort. The original list is
+                   not modified.
+
+        Returns:
+            A new list of CareTask objects ordered from earliest to latest
+            preferred_time.
         """
         return sorted(
             tasks,
@@ -417,13 +426,19 @@ class Scheduler:
 
         Args:
             scheduled_tasks: The list of ScheduledTask objects to filter.
+                             The original list is not modified.
             status:    Keep only tasks whose status equals this value
                        (``"pending"``, ``"complete"``, or ``"skipped"``).
-                       ``None`` means no status filter.
+                       Pass ``None`` to skip status filtering.
             pet_name:  When supplied, only return results if *pet* matches
                        this name.  Pass ``None`` to skip pet-name filtering.
-            pet:       The Pet associated with *scheduled_tasks*.
-                       Required when *pet_name* is provided.
+            pet:       The Pet whose plan *scheduled_tasks* belongs to.
+                       Required when *pet_name* is provided; if omitted while
+                       *pet_name* is set, an empty list is returned.
+
+        Returns:
+            A new list containing only the ScheduledTask objects that satisfy
+            all supplied filter criteria.
         """
         result: List[ScheduledTask] = list(scheduled_tasks)
         if status is not None:
